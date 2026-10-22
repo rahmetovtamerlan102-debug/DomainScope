@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050a1c">
+<title>DomainScope — исследование доменов</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--bg:#050a1c;--card:#0d1838;--card2:#11204a;--line:#1b2c5c;--text:#eaf0ff;--mut:#8fa2d4;--blue:#4f7bff;--vio:#7b5cff;--ok:#2fd18a;--okbg:#2fd18a22;--bad:#ff6b81;--warn:#ffb84d;color-scheme:dark;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{background:var(--bg)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;}
+input, textarea { user-select: auto; -webkit-user-select: auto; }
+body{margin:0;color:var(--text);font-family:Inter,system-ui,-apple-system,Arial,sans-serif;min-height:100vh;background:radial-gradient(ellipse at 80% -5%,#1c3a9a55,transparent 50%),radial-gradient(ellipse at 0% 100%,#2a1a7a33,transparent 50%),var(--bg);line-height:1.4; touch-action: pan-x pan-y;}
+button,input{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.app{max-width:480px;margin:auto;position:relative}
+.screen{display:none;min-height:100vh;padding:0 18px 40px}
+.screen.on{display:block;animation:fd .3s ease}
+@keyframes fd{from{opacity:0;transform:translateY(8px)}}
+.top{display:flex;align-items:center;justify-content:space-between;height:60px}
+.top .t{font-weight:700;font-size:16px;position:absolute;left:50%;transform:translateX(-50%)}
+.ib{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:var(--text)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px}
+.logo{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--vio),var(--blue));box-shadow:0 0 18px #5b6bff66}
+.logo .i{width:17px;height:17px}
+.btn{width:100%;height:54px;border-radius:14px;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:9px;color:#fff;background:linear-gradient(100deg,var(--vio),var(--blue));box-shadow:0 10px 28px #5b6bff40;transition:.2s}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.7;cursor:wait;transform:none}
+.in{display:flex;align-items:center;gap:10px;height:54px;padding:0 14px;border-radius:14px;background:#0c173a;border:1px solid #2a3f80;color:var(--mut)}
+.in:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px #4f7bff2a}
+.in input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font-size:16px}
+.in input::placeholder{color:#6e80b5}
+.err{color:var(--bad);font-size:12.5px;margin-top:10px;min-height:0}
+.card{background:linear-gradient(160deg,var(--card),#0a1330);border:1px solid var(--line);border-radius:18px;padding:16px}
+.hero{position:relative;padding-top:6px;min-height:560px}
+.globe{position:absolute;right:-70px;top:-10px;width:330px;height:330px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a6bff77,#14307a55 45%,transparent 70%),radial-gradient(circle,#5b8cff99 1px,transparent 1.6px) 0 0/11px 11px;-webkit-mask:radial-gradient(circle,#000 55%,transparent 72%);mask:radial-gradient(circle,#000 55%,transparent 72%);opacity:.85}
+.hero>*:not(.globe){position:relative}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;padding:7px 12px;border-radius:99px;background:#122a5c;border:1px solid #27458f;color:#bcd0ff;margin-top:150px}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
+h1{font-size:36px;line-height:1.1;letter-spacing:-1.2px;margin:16px 0 12px;font-weight:800}
+h1 span{background:linear-gradient(100deg,#6f8bff,#a371ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:#b4c2e8;font-size:15px;margin:0 0 22px}
+.ex{font-size:13px;color:var(--mut);margin-top:16px}.ex button{color:#8eabff;padding:0 4px}
+h2{font-size:22px;margin:6px 0 16px;letter-spacing:-.4px}
+.chk{display:flex;gap:14px;align-items:center;padding:12px 0}
+.ico{width:44px;height:44px;border-radius:13px;background:#16285a;color:#9db6ff;display:grid;place-items:center;flex:none}
+.chk b{font-size:14px;display:block}.chk small{color:var(--mut);font-size:12px}
+.hint{text-align:center;color:#6f94ff;font-size:12px;margin-top:18px}
+.dh{display:flex;align-items:center;gap:14px;margin:6px 0 16px}
+.dh .ico{width:54px;height:54px;border-radius:16px}
+.dh h3{margin:0;font-size:22px;letter-spacing:-.5px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;overflow-wrap:anywhere}
+.dh small{color:var(--mut);font-size:12px;display:block;margin-top:4px}
+.badge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:7px;background:var(--okbg);color:var(--ok)}
+.badge.bad{background:#ff6b8122;color:var(--bad)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{padding:14px;border-radius:16px;background:linear-gradient(160deg,var(--card),#0a1330);border:1px solid var(--line);text-align:left}
+.tile small{display:flex;gap:7px;align-items:center;color:var(--mut);font-size:12px}
+.tile b{display:block;font-size:19px;margin:8px 0 6px}
+.tile em{font-style:normal;font-size:12px;font-weight:600;color:var(--ok)}
+.tile .ok{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:700;margin-top:10px}
+.tile .ok .i{width:22px;height:22px;padding:3px;border-radius:50%;background:var(--ok);color:#051;stroke-width:3}
+.tile.bad .ok .i{background:var(--bad);color:#200}
+.tile.bad em { color: var(--bad) !important; }
+.tile.warn em { color: var(--warn) !important; }
+
+.sec{font-size:15px;font-weight:700;margin:22px 0 10px}
+.kv{display:flex;justify-content:space-between;gap:16px;padding:9px 0;font-size:13.5px}
+.kv span{color:#7f9dff;flex:none}.kv b{font-weight:500;text-align:right;overflow-wrap:anywhere;min-width:0}
+.panel .kv{border-bottom:1px solid #ffffff0a}.panel .kv:last-child{border:0}
+
+.status-row { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #ffffff0a; }
+.status-row:last-child { border: 0; }
+.status-row .s-ico { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: none; margin-top: 2px; }
+.status-row .s-ico.ok { background: var(--okbg); color: var(--ok); }
+.status-row .s-ico.bad { background: #ff6b8122; color: var(--bad); }
+.status-row .s-ico.warn { background: #ffb84d22; color: var(--warn); }
+.status-row .s-txt { flex: 1; }
+.status-row b { font-size: 13.5px; display: block; color: #fff; }
+.status-row small { color: var(--mut); font-size: 12px; display: block; margin-top: 2px; line-height: 1.4; }
+.status-row .s-val { font-size: 12px; font-family: monospace; background: #091330; padding: 4px 8px; border-radius: 6px; margin-top: 6px; display: inline-block; border: 1px solid var(--line); color: #b4c2e8; }
+
+.main-ip{display:flex;align-items:center;gap:14px}.main-ip .ico{width:48px;height:48px}
+.main-ip small{color:var(--mut);font-size:12px}.main-ip b{font-size:21px;display:block}
+.map{margin-top:12px;overflow:hidden;padding:0}.map svg{display:block;width:100%;height:auto}
+.mapf{display:flex;align-items:center;gap:12px;padding:14px}
+.mapf b{font-size:14px;display:block}.mapf small{color:#9db6ff;font-size:12px}
+.ssl{display:flex;gap:14px;align-items:center;padding:16px;margin-bottom:12px;border-radius:18px;background:linear-gradient(160deg,#0d3a40,#0a1f3a);border:1px solid #1d6a66}
+.ssl.bad{background:linear-gradient(160deg,#401020,#1a0a20);border-color:#7a2a40}
+.ssl .ico{width:50px;height:50px;background:#12485a;color:#7fe8c8}.ssl.bad .ico{background:#5a1a2a;color:var(--bad)}
+.ssl b{color:#4ee0b0;font-size:15px}.ssl.bad b{color:var(--bad)}.ssl small{display:block;color:#a9c4d8;font-size:12px;margin-top:3px}
+.ck{display:flex;align-items:center;gap:12px;padding:10px 0;font-size:14px}
+.ck .i{width:22px;height:22px;padding:3px;border-radius:50%;background:var(--ok);color:#051;stroke-width:3}
+.ck.no .i{background:#2a3560;color:#9aa8d8}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11.5px;color:#b4c2e8;margin:12px 0 0;background:#091330;border:1px solid var(--line);border-radius:12px;padding:12px;display:none}
+.empty{text-align:center;color:var(--mut);padding:50px 10px;font-size:14px}
+.toast{position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translate(-50%,20px);opacity:0;background:#1d2f66;color:#fff;font-size:13px;font-weight:600;padding:10px 18px;border-radius:99px;transition:.3s;z-index:30;pointer-events:none}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.globe{top:50px}
+#s-home,.hero{position:relative}
+.featw{margin-top:34px}.featw h2{font-size:20px}
+.feat{display:grid;gap:10px}
+.feat .card{display:flex;flex-direction:column;gap:6px}.feat .card .ico{margin-bottom:8px}
+.feat small{color:var(--mut);font-size:12.5px}.feat b{font-size:15px}
+.site{display:none}.sharebtn{display:none}
+.foot{text-align:center;color:var(--mut);font-size:12px;padding:22px 18px calc(26px + env(safe-area-inset-bottom,0px));border-top:1px solid #ffffff0d}
+
+.vuln-card { 
+  margin-bottom: 12px; 
+  padding: 18px; 
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: linear-gradient(160deg, var(--card), #0a1330);
+}
+.vuln-title { font-size: 15px; font-weight: 700; color: #fff; margin: 0 0 8px 0; line-height: 1.4; }
+.vuln-desc { font-size: 13px; color: #a9c4d8; line-height: 1.6; margin: 0; }
+
+.rec {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 12px;
+  text-align: left;
+  transition: all 0.2s ease;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(160deg, var(--card), #0a1330);
+  cursor: pointer;
+}
+.rec .tg {
+  width: 44px; height: 44px; border-radius: 12px;
+  display: grid; place-items: center; font-weight: 800; font-size: 15px;
+  flex: none; color: #fff;
+}
+.rec .m { flex: 1; margin-left: 14px; overflow: hidden; text-align: left; }
+.rec b { font-size: 15px; display: block; color: #fff; margin-bottom: 4px; }
+.rec .v { font-size: 13px; color: #d4defa; line-height: 1.5; word-break: break-all; }
+.rec small { font-size: 12px; color: var(--mut); display: block; margin-top: 6px; }
+.rec .i { color: var(--mut); transition: transform 0.2s; flex: none; }
+.rec.open { border-color: #3b5faa; background: linear-gradient(160deg, #11224a, #0d1936); box-shadow: 0 8px 24px #4f7bff1a; }
+.rec.open .i { transform: rotate(90deg); color: var(--blue); }
+.rec:not(.open) .v { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; white-space: normal; }
+
+@media(min-width:900px){
+.site{display:flex;align-items:center;justify-content:space-between;height:78px;max-width:1120px;margin:auto;padding:0 28px}
+.site nav{display:flex;gap:30px;font-size:14px;color:#aab8e0}.site nav button:hover,.site .brand:hover{color:#fff}
+.app{max-width:1120px;padding:0 28px}.screen{padding:0 0 50px}.top{display:none}
+.hero{max-width:540px;min-height:600px;display:flex;flex-direction:column;justify-content:center}
+.globe{width:640px;height:640px;right:-60px;top:10px}.pill{margin-top:0;align-self:flex-start}
+h1{font-size:58px;letter-spacing:-2.2px}.lead{font-size:16px;max-width:460px}
+#hform{display:flex;gap:10px}#hform .in{flex:1}#hform .btn{width:auto;padding:0 28px;margin-top:0!important;white-space:nowrap}
+.feat{grid-template-columns:repeat(4,1fr);gap:14px}.featw h2{font-size:26px;margin-bottom:18px}
+#s-check{max-width:560px;margin:0 auto;padding-top:30px}
+.app.rm{display:grid;grid-template-columns:1fr 1fr;column-gap:22px;align-items:start}
+.app.rm .rmx{display:block;animation:none;min-height:0;padding:0 0 22px}
+.app.rm #s-report{grid-column:1/-1;padding-top:10px}
+.app.rm .rmx:not(#s-report) .top{display:flex;height:auto;margin-bottom:14px}
+.app.rm .top .ib{display:none}.app.rm .top .t{position:static;transform:none;font-size:18px}
+.tiles{grid-template-columns:repeat(4,1fr);gap:14px}
+.dh .sharebtn{display:flex;align-items:center;gap:8px;margin-left:auto;padding:11px 18px;border-radius:12px;background:#13204a;border:1px solid var(--line);font-size:13px;font-weight:600}
+.dh h3{font-size:28px}
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/></symbol>
+<symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+<symbol id="i-bug" viewBox="0 0 24 24"><path d="M8 2l1.88 1.88M16 2l-1.88 1.88M9 7.13v-1a3.003 3.003 0 116 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 014-4h4a4 4 0 014 4v3c0 3.3-2.7 6-6 6z"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></symbol>
+<symbol id="i-network" viewBox="0 0 24 24"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></symbol>
+<symbol id="i-alert-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+<symbol id="i-shield-off" viewBox="0 0 24 24"><path d="M19.69 14a6.9 6.9 0 0 0 .31-2V5l-8-3-3.16 1.18"/><path d="M4.73 4.73L4 5v7c0 6 8 10 8 10a20.29 20.29 0 0 0 5.62-4.38"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+<symbol id="i-robot" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></symbol>
+<symbol id="i-cpu" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></symbol>
+<symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+<symbol id="i-cookie" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 12v.01"/><path d="M12 16v.01"/></symbol>
+<symbol id="i-command" viewBox="0 0 24 24"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></symbol>
+<symbol id="i-activity" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></symbol>
+</defs></svg>
+
+<header class="site"><button class="brand" id="hb"><span class="logo"><svg class="i"><use href="#i-search"/></svg></span>DomainScope</button><nav><button data-go="home">Главная</button><button data-go="check">Проверить домен</button></nav></header>
+<div class="app" id="app">
+
+<section class="screen on" id="s-home">
+  <div class="top"><div class="brand"><span class="logo"><svg class="i"><use href="#i-search"/></svg></span>DomainScope</div><span class="ib"></span></div>
+  <div class="globe"></div>
+  <div class="hero">
+    <span class="pill"><i></i>Исследование доменов</span>
+    <h1>Вся информация<br>о <span>любом домене</span></h1>
+    <p class="lead">DNS, IP, SSL, WHOIS, порты, поддомены и поиск уязвимостей.</p>
+    <form id="hform"><label class="in"><svg class="i"><use href="#i-globe"/></svg><input id="hdomain" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Введите домен…"></label>
+    <button class="btn" style="margin-top:12px" type="submit" id="hbtn"><svg class="i"><use href="#i-search"/></svg><span>Исследовать</span></button></form>
+    <div class="err" id="herr"></div>
+    <div class="ex">Примеры: <button data-q="google.com">google.com</button><button data-q="github.com">github.com</button><button data-q="лунопэй.рф">лунопэй.рф</button></div>
+  </div>
+  <div class="featw"><h2>Всё о домене — в одном отчёте</h2><div class="feat">
+    <div class="card"><span class="ico"><svg class="i"><use href="#i-server"/></svg></span><b>DNS-записи</b><small>A, AAAA, MX, NS, TXT, SPF и DMARC</small></div>
+    <div class="card"><span class="ico"><svg class="i"><use href="#i-globe"/></svg></span><b>IP и инфраструктура</b><small>Адреса, провайдер, ASN, геолокация</small></div>
+    <div class="card"><span class="ico"><svg class="i"><use href="#i-doc"/></svg></span><b>WHOIS / RDAP</b><small>Регистратор, даты и статусы</small></div>
+    <div class="card"><span class="ico"><svg class="i"><use href="#i-shield"/></svg></span><b>SSL и уязвимости</b><small>Срок действия, TLS, поиск ошибок</small></div>
+  </div></div>
+</section>
+
+<section class="screen" id="s-check">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="brand"><span class="logo"><svg class="i"><use href="#i-search"/></svg></span>DomainScope</div><span class="ib"></span></div>
+  <h2>Проверка домена</h2>
+  <label class="in"><svg class="i"><use href="#i-globe"/></svg><input id="cdomain" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="example.com"><button type="button" id="cclear" style="color:var(--mut)"><svg class="i"><use href="#i-x"/></svg></button></label>
+  <button class="btn" style="margin-top:12px" id="cgo"><svg class="i"><use href="#i-search"/></svg><span>Начать проверку</span></button>
+  <div class="err" id="cerr"></div>
+  <div class="card" style="margin-top:16px"><div class="sec" style="margin:0 0 4px">Что мы проверяем</div>
+    <div class="chk"><span class="ico"><svg class="i"><use href="#i-server"/></svg></span><div><b>DNS-записи</b><small>A, AAAA, MX, NS, TXT, CNAME и др.</small></div></div>
+    <div class="chk"><span class="ico"><svg class="i"><use href="#i-globe"/></svg></span><div><b>IP и инфраструктура</b><small>IP-адреса, провайдер, ASN, геолокация</small></div></div>
+    <div class="chk"><span class="ico"><svg class="i"><use href="#i-doc"/></svg></span><div><b>WHOIS / RDAP</b><small>Регистратор, даты, статусы</small></div></div>
+    <div class="chk"><span class="ico"><svg class="i"><use href="#i-shield"/></svg></span><div><b>SSL-сертификат</b><small>Срок действия, издатель, TLS</small></div></div>
+    <div class="chk"><span class="ico"><svg class="i"><use href="#i-list"/></svg></span><div><b>Заголовки и Порты</b><small>Проверка безопасности и открытых портов</small></div></div>
+    <div class="chk"><span class="ico"><svg class="i"><use href="#i-layers"/></svg></span><div><b>Поддомены</b><small>Поиск тестовых и скрытых сервисов</small></div></div>
+    <div class="chk"><span class="ico"><svg class="i"><use href="#i-cpu"/></svg></span><div><b>Технологии и Cookies</b><small>CMS, сервер, аналитика, флаги куки</small></div></div>
+  </div>
+  <div class="hint">Проверка занимает от 5 до 60 секунд</div>
+</section>
+
+<section class="screen rmx" id="s-report">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="brand"><span class="logo"><svg class="i"><use href="#i-search"/></svg></span>DomainScope</div><button class="ib" id="share"><svg class="i"><use href="#i-share"/></svg></button></div>
+  <div class="dh"><span class="ico"><svg class="i" style="width:28px;height:28px"><use href="#i-globe"/></svg></span><div><h3><span id="rd"></span><span class="badge" id="rb">Активен</span></h3><small id="rm"></small></div><button class="sharebtn" id="share3"><svg class="i"><use href="#i-share"/></svg>Поделиться</button></div>
+  <div class="tiles" id="tiles"></div>
+  <div class="sec">Краткая информация</div>
+  <div id="brief"></div>
+</section>
+
+<section class="screen rmx" id="s-dns">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">DNS-записи</div><span class="ib"></span></div>
+  <div id="dlist" style="margin-top:10px;"></div>
+</section>
+
+<section class="screen rmx" id="s-ip">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">IP и инфраструктура</div><span class="ib"></span></div>
+  <div id="ipbox"></div>
+</section>
+
+<section class="screen rmx" id="s-whois">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">WHOIS</div><button class="ib" id="share2"><svg class="i"><use href="#i-share"/></svg></button></div>
+  <div id="wbox"></div>
+</section>
+
+<section class="screen rmx" id="s-ssl">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">SSL-сертификат</div><span class="ib"></span></div>
+  <div id="sbox"></div>
+</section>
+
+<section class="screen rmx" id="s-headers">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">Заголовки</div><span class="ib"></span></div>
+  <div id="headersList" style="margin-top:10px;"></div>
+</section>
+
+<section class="screen rmx" id="s-ports">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">Открытые порты</div><span class="ib"></span></div>
+  <div id="portsList" style="margin-top:10px;"></div>
+</section>
+
+<section class="screen rmx" id="s-subdomains">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">Поддомены</div><span class="ib"></span></div>
+  <div id="subsList" style="margin-top:10px;"></div>
+</section>
+
+<section class="screen rmx" id="s-waf">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">WAF Защита</div><span class="ib"></span></div>
+  <div id="wafList" style="margin-top:10px;"></div>
+</section>
+
+<section class="screen rmx" id="s-robots">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">Robots.txt</div><span class="ib"></span></div>
+  <div id="robotsList" style="margin-top:10px;"></div>
+</section>
+
+<section class="screen rmx" id="s-tech">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">Технологии</div><span class="ib"></span></div>
+  <div id="techList" style="margin-top:10px;"></div>
+</section>
+
+<section class="screen rmx" id="s-speed">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">Скорость</div><span class="ib"></span></div>
+  <div id="speedList" style="margin-top:10px;"></div>
+</section>
+
+<section class="screen rmx" id="s-cookies">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">Cookies</div><span class="ib"></span></div>
+  <div id="cookiesList" style="margin-top:10px;"></div>
+</section>
+
+<section class="screen rmx" id="s-methods">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">HTTP-методы</div><span class="ib"></span></div>
+  <div id="methodsList" style="margin-top:10px;"></div>
+</section>
+
+<section class="screen rmx" id="s-vulns">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">Уязвимости</div><span class="ib"></span></div>
+  <div id="vulnsList"></div>
+</section>
+
+</div>
+<footer class="foot">© 2026 DomainScope · Данные зависят от доступности внешних DNS и RDAP-сервисов</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const API = d => `/api/scan/${d}`;
+const DEMO_FALLBACK = true; 
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ic = n => `<svg class="i"><use href="#i-${n}"/></svg>`;
+let data = null, stack = ["home"], cur = "home", busy = false;
+const GRP = ["report", "dns", "ip", "whois", "ssl", "vulns", "headers", "ports", "subdomains", "waf", "robots", "tech", "speed", "cookies", "methods"], dsk = () => matchMedia("(min-width:900px)").matches;
+
+function toast(t) { const e = $("toast"); e.textContent = t; e.classList.add("show"); setTimeout(() => e.classList.remove("show"), 1700); }
+const fmtDT = t => new Date(t).toLocaleString("ru-RU", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+const pl = n => n % 10 === 1 && n % 100 !== 11 ? "запись" : [2, 3, 4].includes(n % 10) && ![12, 13, 14].includes(n % 100) ? "записи" : "записей";
+
+function go(n, back) {
+  if (!back) { if (n === "home") stack = ["home"]; else stack.push(n); }
+  cur = n;
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + n));
+  $("app").classList.toggle("rm", GRP.includes(n));
+  window.scrollTo(0, 0);
+}
+const back = () => { stack.pop(); go(stack[stack.length - 1] || "home", true); };
+
+function clean(v) {
+  let d = v.trim().toLowerCase().replace(/^https?:\/\//, "").split(/[\/?#:]/)[0].replace(/\.$/, "");
+  if (!d || d.length > 253 || !d.includes(".")) {
+    throw new Error("Введите корректный домен, например example.com или лунопэй.рф");
+  }
+  if (!/^[a-z0-9.\-\u0400-\u04FF]+$/i.test(d)) {
+    throw new Error("Недопустимые символы в домене");
+  }
+  return d;
+}
+
+function demo(d) {
+  return { domain: d, ip_address: "93.184.216.34", scanned_at: new Date().toISOString(),
+    dns: { a_records: ["93.184.216.34"], aaaa_records: ["2606:2800:220:1:248:1893:25c8:1946"], mx_records: ["mail." + d], ns_records: ["ns1.cloudflare.com", "ns2.cloudflare.com"], txt_records: ["v=spf1 include:_spf.cloudflare.com ~all"], caa_records: ["0 issue \"letsencrypt.org\""], spf: "v=spf1 include:_spf.cloudflare.com ~all", dmarc: "v=DMARC1; p=reject" },
+    ip_info: { provider: "Cloudflare, Inc.", asn: "13335", city: "Сан-Франциско", country: "США", lat: 37.7749, lon: -122.4194 },
+    whois: { registrar: "Cloudflare, Inc.", creation_date: "2018-11-12", expiration_date: "2026-11-12", status: ["clientTransferProhibited", "clientUpdateProhibited"] },
+    ssl: { valid: true, issuer: "Cloudflare Inc.", expires_at: "2025-11-12", valid_from: "2024-11-12", expires_in_days: 69, tls_version: "TLS 1.3", algorithm: "ECDSA (P-256)", hsts: true },
+    headers: { "server": "nginx/1.18.0", "x-powered-by": "PHP/7.4", "content-type": "text/html" },
+    open_ports: [22, 3306],
+    subdomains: ["www."+d, "api."+d, "dev."+d, "admin."+d],
+    waf: "Cloudflare",
+    sensitive_paths: ["/admin-panel", "/backup.zip"],
+    has_sitemap: true,
+    has_security_txt: false,
+    response_time: 145,
+    technologies: ["Сервер: nginx/1.18.0", "Backend: PHP/7.4", "CMS: WordPress", "JS: jQuery", "Аналитика: Google Analytics"],
+    cookies: [
+      { name: "PHPSESSID", secure: false, http_only: true, same_site: "Lax" },
+      { name: "csrf_token", secure: true, http_only: false, same_site: "Strict" }
+    ],
+    http_methods: ["GET", "POST", "OPTIONS", "PUT", "TRACE"],
+    mta_sts: false,
+    tls_rpt: false,
+    http_version: "HTTP/1.1",
+    domain_days_left: 365,
+    sqli_found: true,
+    vulns: [
+      { severity: "critical", title: "Уязвимость к SQL-инъекциям (SQLi)", desc: "Сервер вернул ошибку базы данных при тестовом запросе. Злоумышленники могут украсть всю базу данных." },
+      { severity: "critical", title: "Отсутствует Content-Security-Policy (CSP)", desc: "Отсутствует заголовок CSP. Снижает защиту от внедрения сторонних скриптов (XSS)." },
+      { severity: "critical", title: "Открыт порт MySQL (3306)", desc: "База данных доступна из интернета. Это критическая уязвимость." },
+      { severity: "high", title: "Отсутствует HSTS", desc: "Заголовок Strict-Transport-Security не настроен. Браузеры могут использовать незащищенное соединение." },
+      { severity: "high", title: "Отсутствует DMARC", desc: "Нет DMARC записи. Это позволяет отправлять письма от имени домена без проверки подлинности." },
+      { severity: "high", title: "Разрешены опасные HTTP-методы", desc: "Сервер разрешает методы: PUT, TRACE." }
+    ]
+  };
+}
+
+async function scan(d) {
+  if (busy) return; busy = true;
+  
+  const isHome = $("s-home").classList.contains("on");
+  const btn = isHome ? $("hbtn") : $("cgo");
+  const origText = btn.innerHTML;
+  btn.innerHTML = `<svg class="i" style="animation:spin 1s linear infinite"><use href="#i-globe"/></svg> <span>Сканирую...</span>`;
+  btn.disabled = true;
+
+  try {
+    const r = await fetch(API(d));
+    if (!r.ok) throw new Error("Не удалось просканировать домен. Возможно, он не существует.");
+    const res = await r.json();
+    
+    data = res; if (!data.domain) data.domain = d;
+    renderAll(); 
+    stack = ["home"]; 
+    go("report");
+    
+  } catch (e) {
+    if (isHome) { $("herr").textContent = e.message; } else { $("cerr").textContent = e.message; }
+    if (DEMO_FALLBACK) {
+      data = demo(d);
+      renderAll();
+      stack = ["home"];
+      go("report");
+    }
+  } finally {
+    btn.innerHTML = origText;
+    btn.disabled = false;
+    busy = false;
+  }
+}
+
+function groups(x) {
+  const d = x.dns || {}, txt = d.txt_records || [d.spf, d.dmarc].filter(Boolean);
+  return [["A", "A-записи", "#2f6bff", d.a_records || []], ["AAAA", "AAAA-записи", "#7b5cff", d.aaaa_records || []], ["MX", "MX-записи", "#22b07d", d.mx_records || []], ["NS", "NS-серверы", "#f08a2c", d.ns_records || []], ["TXT", "TXT-записи", "#6a4cf0", txt], ["CAA", "CAA-записи", "#e83e8c", d.caa_records || []]].filter(g => g[3].length);
+}
+const kv = (k, v) => `<div class="kv"><span>${esc(k)}</span><b>${esc(v ?? "—")}</b></div>`;
+
+function renderAll() {
+  const x = data, g = groups(x), n = g.reduce((s, a) => s + a[3].length, 0);
+  const ips = [...(x.dns?.a_records || []), ...(x.dns?.aaaa_records || [])], w = x.whois || {}, s = x.ssl || {}, inf = x.ip_info || {};
+  const main = x.ip_address || ips[0];
+  const vulns = x.vulns || [];
+  const open_ports = x.open_ports || [];
+  const headers = x.headers || {};
+  const subs = x.subdomains || [];
+  const techs = x.technologies || [];
+  const ttfb = x.response_time;
+  const cookies = x.cookies || [];
+  const methods = x.http_methods || [];
+  const daysLeft = x.domain_days_left;
+
+  $("rd").textContent = x.domain;
+  $("rb").textContent = main ? "Активен" : "Не найден"; $("rb").classList.toggle("bad", !main);
+  $("rm").textContent = "Проверено: " + fmtDT(x.scanned_at || Date.now());
+
+  const tile = (go, i, k, v, sub, cls = "") => `<button class="tile ${cls}" data-go="${go}"><small>${ic(i)}${k}</small>${sub ? `<b>${v}</b><em>${sub}</em>` : `<div class="ok">${ic(cls ? "x" : "check")}${v}</div>`}</button>`;
+  
+  let tilesHtml = "";
+
+  // 1. IP-адреса
+  if (ips.length > 0 || main) {
+    tilesHtml += tile("ip", "globe", "IP-адреса", ips.length || 1, "Найдено");
+  }
+
+  // 2. DNS-записи
+  if (n > 0) {
+    tilesHtml += tile("dns", "server", "DNS-записи", n, "Найдено");
+  }
+
+  // 3. SSL (ВСЕГДА НА ЭКРАНЕ)
+  tilesHtml += tile("ssl", "shield", "SSL", s.valid ? "Валиден" : "Ошибка", "", s.valid ? "" : "bad");
+
+  // 4. WHOIS (ВСЕГДА НА ЭКРАНЕ)
+  tilesHtml += w.registrar 
+    ? `<button class="tile" data-go="whois"><small>${ic("doc")}WHOIS</small><div class="ok">${ic("check")}Доступно</div></button>`
+    : `<button class="tile bad" data-go="whois"><small>${ic("doc")}WHOIS</small><div class="ok">${ic("x")}Скрыто</div></button>`;
+
+  // 5. WAF (ВСЕГДА НА ЭКРАНЕ)
+  const hasWaf = x.waf && x.waf !== "Не обнаружен" && x.waf !== "Nginx (WAF не обнаружен)";
+  tilesHtml += hasWaf
+    ? `<button class="tile" data-go="waf"><small>${ic("shield")}WAF</small><div class="ok">${ic("check")}Есть</div></button>`
+    : `<button class="tile bad" data-go="waf"><small>${ic("shield-off")}WAF</small><div class="ok">${ic("x")}Нет</div></button>`;
+
+  // 6. Robots
+  if (x.sensitive_paths && x.sensitive_paths.length > 0) {
+    tilesHtml += `<button class="tile warn" data-go="robots"><small>${ic("robot")}Robots</small><b style="color:var(--warn)">${x.sensitive_paths.length}</b><em>путей</em></button>`;
+  }
+
+  // 7. Технологии
+  if (techs.length > 0) {
+    tilesHtml += `<button class="tile" data-go="tech"><small>${ic("cpu")}Технологии</small><b>${techs.length}</b><em>найдено</em></button>`;
+  }
+
+  // 8. Скорость
+  if (ttfb !== null && ttfb !== undefined) {
+    tilesHtml += `<button class="tile ${ttfb > 500 ? 'warn' : ''}" data-go="speed"><small>${ic("zap")}Скорость</small><b>${ttfb} <span style="font-size:12px;font-weight:400">мс</span></b><em>TTFB</em></button>`;
+  }
+
+  // 9. Cookies
+  if (cookies.length > 0) {
+    tilesHtml += `<button class="tile" data-go="cookies"><small>${ic("cookie")}Cookies</small><b>${cookies.length}</b><em>найдено</em></button>`;
+  }
+
+  // 10. Методы
+  if (methods.length > 0) {
+    const hasDangerMethods = methods.some(m => ["TRACE", "PUT", "DELETE", "CONNECT", "PATCH"].includes(m));
+    tilesHtml += `<button class="tile ${hasDangerMethods ? 'bad' : ''}" data-go="methods"><small>${ic("command")}Методы</small><b>${methods.length}</b><em>разрешено</em></button>`;
+  }
+
+  // 11. Уязвимости
+  if (vulns.length > 0) {
+    tilesHtml += `<button class="tile bad" data-go="vulns"><small>${ic("bug")}Уязвимости</small><b style="color:var(--bad)">${vulns.length}</b><em>найдено</em></button>`;
+  }
+
+  // 12. Порты
+  if (open_ports.length > 0) {
+    tilesHtml += `<button class="tile warn" data-go="ports"><small>${ic("network")}Порты</small><b style="color:var(--warn)">${open_ports.length}</b><em>открыто</em></button>`;
+  }
+
+  // 13. Заголовки
+  if (Object.keys(headers).length > 0) {
+    tilesHtml += `<button class="tile" data-go="headers"><small>${ic("list")}Заголовки</small><b>${Object.keys(headers).length}</b><em>найдено</em></button>`;
+  }
+
+  // 14. Поддомены
+  if (subs.length > 0) {
+    tilesHtml += `<button class="tile warn" data-go="subdomains"><small>${ic("layers")}Поддомены</small><b style="color:var(--warn)">${subs.length}</b><em>найдено</em></button>`;
+  }
+
+  // 15. HTTP Протокол
+  if (x.http_version) {
+    const isH3 = x.http_version === "HTTP/3";
+    const isH2 = x.http_version === "HTTP/2";
+    tilesHtml += `<button class="tile ${!isH3 && !isH2 ? 'warn' : ''}" data-go="speed"><small>${ic("activity")}Протокол</small><b>${x.http_version}</b><em>${isH3 ? 'Отлично' : isH2 ? 'Хорошо' : 'Устарел'}</em></button>`;
+  }
+
+  $("tiles").innerHTML = tilesHtml;
+
+  $("brief").innerHTML = `<div class="card panel">${kv("IP-адрес", main)}${kv("Регистратор", w.registrar || "Скрыт")}${kv("Дата регистрации", w.creation_date)}${kv("Истекает", w.expiration_date)}</div>`;
+  
+  renderDNS();
+  renderVulns(vulns); 
+  renderHeaders(headers);
+  renderPorts(open_ports, main);
+  renderSubdomains(subs);
+  renderWaf(x.waf);
+  renderRobots(x.sensitive_paths, x.has_sitemap);
+  renderTech(techs);
+  renderSpeed(ttfb);
+  renderCookies(cookies);
+  renderMethods(methods);
+
+  $("ipbox").innerHTML = `<div class="card"><div class="main-ip"><span class="ico">${ic("pin")}</span><div style="flex:1"><small>Основной IP-адрес</small><b>${esc(main || "Не найден")}</b></div><button class="ib" id="cpip">${ic("copy")}</button></div>
+    <div class="panel" style="margin-top:8px">${kv("Провайдер", inf.provider)}${kv("ASN", inf.asn)}${kv("Геолокация", [inf.country, inf.city].filter(Boolean).join(", ") || "—")}</div></div>
+    ${inf.lat != null ? `<div class="card map"><svg viewBox="0 0 300 120"><rect width="300" height="120" fill="#0a1636"/><g stroke="#16306b" stroke-width=".6">${Array.from({length: 11}, (_, i) => `<path d="M${i * 30} 0V120"/>`).join("")}${Array.from({length: 5}, (_, i) => `<path d="M0 ${i * 30}H300"/>`).join("")}</g><path d="M20 30l40-12 40 6 20 22-10 26-40 8-30-14z M150 20l50-8 70 14 12 26-30 20-50-6-30 18-24-30z" fill="#14306e" opacity=".8"/><circle cx="150" cy="60" r="16" fill="#4f7bff" opacity=".25"/><path d="M150 76s10-9 10-16a10 10 0 0 0-20 0c0 7 10 16 10 16z" fill="#4f7bff"/><circle cx="150" cy="60" r="3.5" fill="#fff"/></svg><div class="mapf"><span class="ico">${ic("globe")}</span><div><b>${esc([inf.city, inf.country].filter(Boolean).join(", "))}</b><small>${inf.lat}° N, ${Math.abs(inf.lon)}° ${inf.lon < 0 ? "W" : "E"}</small></div></div></div>` : ""}
+    ${ips.length > 1 ? `<div class="card" style="margin-top:12px"><div class="chk" style="padding:0"><span class="ico">${ic("shield")}</span><div style="min-width:0"><b>Дополнительные IP</b><small style="overflow-wrap:anywhere">${esc(ips.filter(i => i !== main).join(", "))}</small></div></div></div>` : ""}`;
+  const cp = $("cpip"); if (cp) cp.onclick = () => copy(main);
+  
+  // БЛОК WHOIS С ДОБАВЛЕННЫМИ ДНЯМИ
+  $("wbox").innerHTML = `<div class="card panel"><div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px"><b>${esc(x.domain)}</b><span class="badge">Активен</span></div>${kv("Регистратор", w.registrar || "Скрыт")}${kv("Создан", w.creation_date)}${kv("Истекает", w.expiration_date)}${daysLeft != null ? kv("Осталось дней", daysLeft + " дн.") : ""}${kv("Статус", (w.status || []).join(", ") || "—")}</div>
+    <div class="card panel" style="margin-top:12px"><b>Контактные данные</b>${kv("Владелец", "Скрыто (Privacy Protect)")}${kv("Адрес", "Скрыто")}${kv("Email", "Скрыто")}</div>`;
+  
+  const ck = (ok, t) => `<div class="ck ${ok ? "" : "no"}">${ic(ok ? "check" : "x")}${t}</div>`;
+  $("sbox").innerHTML = `<div class="ssl ${s.valid ? "" : "bad"}"><span class="ico">${ic("shield")}</span><div><b>${s.valid ? "Сертификат действителен" : "Сертификат недействителен"}</b><small>${s.valid ? "Домен использует защищённое соединение." : "Не удалось подтвердить защищённое соединение."}</small></div></div>
+    ${s.valid ? `<div class="card panel">${kv("Издатель", s.issuer)}${kv("Срок действия", s.valid_from ? s.valid_from + " – " + s.expires_at : s.expires_at)}${kv("Осталось", s.expires_in_days != null ? s.expires_in_days + " дн." : "—")}${kv("TLS версия", s.tls_version)}${s.algorithm ? kv("Алгоритм", s.algorithm) : ""}</div>` : ""}
+    <div class="sec">Безопасность</div><div class="card">${ck(!!s.hsts, "HTTP Strict Transport Security (HSTS)")}${ck(!!x.dns?.spf, "SPF запись")}${ck(!!x.dns?.dmarc, "DMARC запись")}${ck(!!x.has_security_txt, "Файл security.txt")}${ck(!!x.mta_sts, "MTA-STS (защита почты)")}${ck(!!x.tls_rpt, "TLS-RPT (отчеты о доставке)")}</div>`;
+}
+
+function renderCookies(cookies) {
+  if (!cookies || cookies.length === 0) {
+    $("cookiesList").innerHTML = `<div class="empty">${ic("cookie")}<br><br>Сайт не использует Cookies.</div>`;
+    return;
+  }
+
+  let html = `<div class="card" style="margin-bottom:16px; border-color:#1d3270; background:linear-gradient(160deg,#0d1838,#11204a);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="ico" style="background:#16285a; color:#9db6ff;">${ic("cookie")}</span>
+      <div>
+        <div style="font-size:16px; font-weight:800; color:#fff;">Найдено ${cookies.length} Cookies</div>
+        <div style="font-size:12px; color:#8fa2d4; margin-top:2px;">Проверка флагов безопасности</div>
+      </div>
+    </div>
+  </div>`;
+
+  cookies.forEach(c => {
+    let flagsHtml = "";
+    flagsHtml += `<span class="badge ${c.secure ? '' : 'bad'}" style="margin-right:6px;">${c.secure ? 'Secure' : 'No Secure'}</span>`;
+    flagsHtml += `<span class="badge ${c.http_only ? '' : 'bad'}" style="margin-right:6px;">${c.http_only ? 'HttpOnly' : 'No HttpOnly'}</span>`;
+    flagsHtml += `<span class="badge ${c.same_site ? '' : 'warn'}">${c.same_site ? 'SameSite: '+c.same_site : 'No SameSite'}</span>`;
+
+    html += `<div class="card" style="margin-bottom:10px; padding:14px;">
+      <div style="font-weight:700; font-size:14px; margin-bottom:8px; color:#fff;">${esc(c.name)}</div>
+      <div style="display:flex; flex-wrap:wrap; gap:6px;">${flagsHtml}</div>
+    </div>`;
+  });
+
+  $("cookiesList").innerHTML = html;
+}
+
+function renderMethods(methods) {
+  if (!methods || methods.length === 0) {
+    $("methodsList").innerHTML = `<div class="empty">${ic("command")}<br><br>Не удалось определить HTTP-методы.</div>`;
+    return;
+  }
+
+  const dangerous = ["TRACE", "PUT", "DELETE", "CONNECT", "PATCH"];
+  const hasDanger = methods.some(m => dangerous.includes(m));
+
+  let html = `<div class="card" style="margin-bottom:16px; border-color:${hasDanger ? '#7a2a40' : '#1d6a66'}; background:linear-gradient(160deg,${hasDanger ? '#2a0e1a' : '#0d3a40'},#0d1838);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="ico" style="background:${hasDanger ? '#5a1a2a' : '#12485a'}; color:${hasDanger ? 'var(--bad)' : '#7fe8c8'};">${ic("command")}</span>
+      <div>
+        <div style="font-size:16px; font-weight:800; color:${hasDanger ? 'var(--bad)' : '#4ee0b0'};">${hasDanger ? 'Найдены опасные методы' : 'Только безопасные методы'}</div>
+        <div style="font-size:12px; color:#a9c4d8; margin-top:2px;">Сервер разрешает методы: ${methods.join(", ")}</div>
+      </div>
+    </div>
+  </div>
+  <div class="card panel">`;
+
+  methods.forEach(m => {
+    const isDanger = dangerous.includes(m);
+    html += `<div class="status-row">
+      <span class="s-ico ${isDanger ? 'bad' : 'ok'}">${ic(isDanger ? "x" : "check")}</span>
+      <div class="s-txt"><b>${esc(m)}</b><small>${isDanger ? 'Потенциально опасный метод' : 'Безопасный метод'}</small></div>
+    </div>`;
+  });
+  html += `</div>`;
+  
+  $("methodsList").innerHTML = html;
+}
+
+function renderSpeed(ttfb) {
+  if (ttfb === null || ttfb === undefined) {
+    $("speedList").innerHTML = `<div class="empty">${ic("zap")}<br><br>Не удалось измерить скорость.</div>`;
+    return;
+  }
+  const isFast = ttfb < 300;
+  const isMid = ttfb >= 300 && ttfb <= 800;
+  const isSlow = ttfb > 800;
+  
+  let color = isFast ? "var(--ok)" : isMid ? "var(--warn)" : "var(--bad)";
+  let bg = isFast ? "#0d3a40" : isMid ? "#3a2e0d" : "#401020";
+  let border = isFast ? "#1d6a66" : isMid ? "#6a661d" : "#7a2a40";
+  let text = isFast ? "Быстрый ответ" : isMid ? "Средняя скорость" : "Медленный ответ";
+  let desc = isFast ? "Сервер отвечает мгновенно. Отличный показатель." : isMid ? "Серверу требуется время на обработку запроса." : "Сайт может загружаться медленно. Рекомендуется оптимизация.";
+  
+  $("speedList").innerHTML = `
+    <div class="card" style="margin-bottom:16px; border-color:${border}; background:linear-gradient(160deg,${bg},#0d1838);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="ico" style="background:${bg}; color:${color};">${ic("zap")}</span>
+        <div>
+          <div style="font-size:16px; font-weight:800; color:${color};">${ttfb} мс</div>
+          <div style="font-size:12px; color:#a9c4d8; margin-top:2px;">${text}</div>
+        </div>
+      </div>
+    </div>
+    <div class="card panel">
+      ${kv("Время ответа (TTFB)", ttfb + " мс")}
+      <div style="font-size:12px; color:var(--mut); margin-top:10px; line-height:1.5;">${desc}</div>
+    </div>
+  `;
+}
+
+function renderTech(techs) {
+  if (!techs || techs.length === 0) {
+    $("techList").innerHTML = `<div class="empty">${ic("cpu")}<br><br>Не удалось определить технологии.</div>`;
+    return;
+  }
+  let html = `<div class="card panel">`;
+  techs.forEach(t => {
+    html += `<div class="status-row"><span class="s-ico ok">${ic("check")}</span><div class="s-txt"><b>${esc(t)}</b></div></div>`;
+  });
+  html += `</div>`;
+  $("techList").innerHTML = html;
+}
+
+function renderWaf(wafName) {
+  const hasWaf = wafName && wafName !== "Не обнаружен" && wafName !== "Nginx (WAF не обнаружен)";
+  if (!hasWaf) {
+    $("wafList").innerHTML = `<div class="empty">${ic("shield-off")}<br><br>WAF не обнаружен.</div>`;
+    return;
+  }
+  
+  $("wafList").innerHTML = `<div class="card" style="margin-bottom:16px; border-color:#1d6a66; background:linear-gradient(160deg,#0d3a40,#0d1838);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="ico" style="background:#12485a; color:#7fe8c8;">${ic("shield")}</span>
+      <div>
+        <div style="font-size:16px; font-weight:800; color:#4ee0b0;">WAF Обнаружен</div>
+        <div style="font-size:12px; color:#a9c4d8; margin-top:2px;">Сайт защищен веб-фаерволом.</div>
+      </div>
+    </div>
+  </div>
+  <div class="card panel">
+    ${kv("Сервис защиты", esc(wafName))}
+  </div>`;
+}
+
+function renderRobots(paths, hasSitemap) {
+  let html = "";
+  
+  if (paths && paths.length > 0) {
+    html += `<div class="card" style="margin-bottom:16px; border-color:#7a2a40; background:linear-gradient(160deg,#2a0e1a,#0d1838);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="ico" style="background:#5a1a2a; color:var(--bad);">${ic("robot")}</span>
+        <div>
+          <div style="font-size:16px; font-weight:800; color:var(--bad);">Найдено ${paths.length} скрытых путей</div>
+          <div style="font-size:12px; color:#ffb3c1; margin-top:2px;">Злоумышленники могут найти эти админки</div>
+        </div>
+      </div>
+    </div>`;
+
+    html += `<div class="card panel" style="margin-bottom:12px;">`;
+    paths.forEach(path => {
+      html += `<div class="kv">
+        <span style="font-family:monospace; font-size:14px;">${esc(path)}</span>
+        <b style="color:var(--warn); font-size:12px;">Закрыт</b>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (hasSitemap) {
+    html += `<div class="card panel" style="margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:14px;">
+        <span class="ico" style="background:var(--okbg); color:var(--ok); width:40px; height:40px;">${ic("check")}</span>
+        <div style="display:flex; flex-direction:column; gap:4px;">
+          <b style="font-size:14px; color:#fff; line-height:1.2;">Sitemap.xml найден</b>
+          <small style="color:var(--mut); font-size:12px; line-height:1.2;">Карта сайта доступна</small>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  $("robotsList").innerHTML = html;
+}
+
+function renderVulns(vulns) {
+  if (!vulns || vulns.length === 0) {
+    $("vulnsList").innerHTML = `<div class="empty">${ic("shield")}<br><br>Уязвимостей не обнаружено.</div>`;
+    return;
+  }
+
+  let html = `<div class="card" style="margin-bottom:16px; border-color:#7a2a40; background:linear-gradient(160deg,#2a0e1a,#0d1838);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="ico" style="background:#5a1a2a; color:var(--bad);">${ic("bug")}</span>
+      <div>
+        <div style="font-size:16px; font-weight:800; color:var(--bad);">Обнаружено ${vulns.length} проблем</div>
+        <div style="font-size:12px; color:#ffb3c1; margin-top:2px;">Рекомендуется устранить в ближайшее время</div>
+      </div>
+    </div>
+  </div>`;
+
+  html += vulns.map(v => `
+    <div class="card vuln-card">
+      <div class="vuln-title">${esc(v.title)}</div>
+      <div class="vuln-desc">${esc(v.desc)}</div>
+    </div>
+  `).join("");
+
+  $("vulnsList").innerHTML = html;
+}
+
+function renderHeaders(headers) {
+  const checks = [
+    { name: "Content-Security-Policy", desc: "Защита от XSS-атак и внедрения сторонних скриптов", key: "content-security-policy" },
+    { name: "Strict-Transport-Security", desc: "Принудительное использование HTTPS", key: "strict-transport-security" },
+    { name: "X-Frame-Options", desc: "Защита от Clickjacking (встраивания в iframe)", key: "x-frame-options" },
+    { name: "X-Content-Type-Options", desc: "Запрет на изменение MIME-типов (nosniff)", key: "x-content-type-options" },
+    { name: "Referrer-Policy", desc: "Контроль передачи реферера", key: "referrer-policy" },
+    { name: "Permissions-Policy", desc: "Ограничение доступа к API браузера", key: "permissions-policy" }
+  ];
+
+  let html = "";
+  checks.forEach(c => {
+    const val = headers[c.key];
+    const has = !!val;
+    html += `
+      <div class="status-row">
+        <span class="s-ico ${has ? 'ok' : 'bad'}">${ic(has ? "check" : "x")}</span>
+        <div class="s-txt">
+          <b>${c.name}</b>
+          <small>${c.desc}</small>
+          ${has ? `<span class="s-val">${esc(val)}</span>` : `<small style="color:var(--bad); margin-top:4px;">Отсутствует</small>`}
+        </div>
+      </div>
+    `;
+  });
+
+  $("headersList").innerHTML = `<div class="card panel">${html}</div>`;
+}
+
+function renderPorts(open_ports, ip) {
+  const ports_list = [
+    { port: 21, name: "FTP", desc: "Передача файлов", risk: "high" },
+    { port: 22, name: "SSH", desc: "Удаленное управление", risk: "warn" },
+    { port: 23, name: "Telnet", desc: "Незащищенный доступ", risk: "critical" },
+    { port: 25, name: "SMTP", desc: "Отправка почты", risk: "warn" },
+    { port: 3306, name: "MySQL", desc: "База данных", risk: "critical" },
+    { port: 5432, name: "PostgreSQL", desc: "База данных", risk: "critical" },
+    { port: 6379, name: "Redis", desc: "База данных / Кэш", risk: "critical" },
+    { port: 8080, name: "HTTP Alt", desc: "Альтернативный веб-порт", risk: "warn" },
+    { port: 8443, name: "HTTPS Alt", desc: "Альтернативный веб-порт", risk: "warn" },
+    { port: 9200, name: "Elasticsearch", desc: "Поисковый движок", risk: "critical" },
+  ];
+
+  let html = "";
+  ports_list.forEach(p => {
+    const isOpen = open_ports.includes(p.port);
+    
+    let statusText = "Закрыт";
+    let color = "var(--mut)";
+    let iconClass = "ok";
+    let iconName = "check";
+
+    if (isOpen) {
+      if (p.risk === "critical") {
+        statusText = "ОПАСНО";
+        color = "var(--bad)";
+        iconClass = "bad";
+        iconName = "x";
+      } else if (p.risk === "high" || p.risk === "warn") {
+        statusText = "Открыт";
+        color = "var(--warn)"; 
+        iconClass = "warn";    
+        iconName = "alert-circle";
+      } else {
+        statusText = "Открыт";
+        color = "var(--ok)";
+        iconClass = "ok";
+      }
+    }
+
+    html += `
+      <div class="status-row">
+        <span class="s-ico ${iconClass}">${ic(iconName)}</span>
+        <div class="s-txt">
+          <b>${p.port} — ${p.name}</b>
+          <small>${p.desc}</small>
+        </div>
+        <span style="font-weight:700; font-size:12px; color:${color}">${statusText}</span>
+      </div>
+    `;
+  });
+
+  $("portsList").innerHTML = `<div class="card panel">${html}</div>`;
+}
+
+function renderSubdomains(subs) {
+  if (!subs || subs.length === 0) {
+    $("subsList").innerHTML = `<div class="empty">${ic("layers")}<br><br>Поддоменов не найдено.</div>`;
+    return;
+  }
+
+  let html = `<div class="card" style="margin-bottom:16px; border-color:#1d3270; background:linear-gradient(160deg,#0d1838,#11204a);">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <span class="ico" style="background:#16285a; color:#9db6ff;">${ic("layers")}</span>
+      <div>
+        <div style="font-size:16px; font-weight:800; color:#fff;">Найдено ${subs.length} поддоменов</div>
+        <div style="font-size:12px; color:#8fa2d4; margin-top:2px;">Проверьте тестовые и служебные сервисы</div>
+      </div>
+    </div>
+  </div>`;
+
+  html += subs.map(sub => `
+    <button class="card status-row" style="width:100%; text-align:left; display:flex; align-items:center; padding:14px; margin-bottom:8px;" onclick="quickScan('${sub}')">
+      <span class="s-ico ok" style="width:32px; height:32px; border-radius:10px;">${ic("globe")}</span>
+      <div class="s-txt" style="margin-left:10px;">
+        <b style="font-size:14px; color:#fff;">${esc(sub)}</b>
+        <small style="color:#2fd18a;">Доступен</small>
+      </div>
+      ${ic("chev")}
+    </button>
+  `).join("");
+
+  $("subsList").innerHTML = html;
+}
+
+window.quickScan = function(sub) {
+  $("hdomain").value = sub;
+  go("home");
+  setTimeout(() => $("hform").requestSubmit(), 100);
+};
+
+function renderDNS() {
+  const g = groups(data);
+  $("dlist").innerHTML = g.length ? g.map(([t, name, col, v]) => `
+    <div class="card rec" onclick="this.classList.toggle('open')">
+      <span class="tg" style="background:${col}">${t}</span>
+      <div class="m">
+        <b>${name}</b>
+        <div class="v">${v.map(esc).join('<br>')}</div>
+        <small>${v.length} ${pl(v.length)}</small>
+      </div>
+      ${ic("chev")}
+    </div>
+  `).join("") : `<div class="empty">Записей не найдено</div>`;
+}
+
+async function copy(t) { try { await navigator.clipboard.writeText(t); toast("Скопировано"); } catch { toast("Копирование недоступно"); } }
+async function share() {
+  const t = JSON.stringify(data, null, 2);
+  if (navigator.share) { try { await navigator.share({ title: "DomainScope: " + data.domain, text: t }); return; } catch {} }
+  copy(t);
+}
+
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); 
+  if (!t || t.classList.contains('rec-copy-btn')) return;
+  
+  if (t.hasAttribute("data-back")) return back();
+  if (t.dataset.go) { const g = t.dataset.go; if (dsk() && GRP.includes(cur) && GRP.includes(g)) return $("s-" + g).scrollIntoView({ behavior: "smooth", block: "start" }); return go(g); }
+  if (t.dataset.q) { $("hdomain").value = t.dataset.q; return $("hform").requestSubmit(); }
+});
+
+$("hform").addEventListener("submit", e => {
+  e.preventDefault(); $("herr").textContent = "";
+  try { const d = clean($("hdomain").value); $("cdomain").value = d; $("cerr").textContent = ""; if (dsk()) scan(d); else go("check"); } catch (x) { $("herr").textContent = x.message; }
+});
+$("cgo").addEventListener("click", () => { $("cerr").textContent = ""; try { scan(clean($("cdomain").value)); } catch (x) { $("cerr").textContent = x.message; } });
+$("cdomain").addEventListener("keydown", e => { if (e.key === "Enter") $("cgo").click(); });
+$("cclear").addEventListener("click", () => { $("cdomain").value = ""; $("cdomain").focus(); });
+$("hb").addEventListener("click", () => go("home")); $("share3").addEventListener("click", share); $("share").addEventListener("click", share); $("share2").addEventListener("click", share);
+go("home");
+</script>
+</body>
+  </html>
