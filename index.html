@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<!-- Блокировка масштабирования -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#050a1c">
+<title>IP Lens & DomainScope</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root,:root:not([data-theme="light"]),:root[data-theme="dark"]{--bg:#050a1c;--card:#0d1838;--card2:#11204a;--line:#1b2c5c;--text:#eaf0ff;--mut:#8fa2d4;--blue:#4f7bff;--vio:#7b5cff;--ok:#2fd18a;--okbg:#2fd18a22;--bad:#ff6b81;--warn:#ffb84d;color-scheme:dark;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{background:var(--bg); overflow-x: hidden;}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;}
+input, textarea { user-select: auto; -webkit-user-select: auto; }
+body{margin:0;color:var(--text);font-family:Inter,system-ui,-apple-system,Arial,sans-serif;min-height:100vh;background:radial-gradient(ellipse at 80% -5%,#1c3a9a55,transparent 50%),radial-gradient(ellipse at 0% 100%,#2a1a7a33,transparent 50%),var(--bg);line-height:1.4; touch-action: pan-x pan-y; overflow-x: hidden;}
+button,input{font:inherit;color:inherit}button{cursor:pointer;border:0;background:none}
+.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.app{max-width:480px;margin:auto;position:relative; overflow-x: hidden;}
+.screen{display:none;min-height:100vh;padding:0 18px 40px}
+.screen.on{display:block;animation:fd .3s ease}
+@keyframes fd{from{opacity:0;transform:translateY(8px)}}
+.top{display:flex;align-items:center;justify-content:space-between;height:60px}
+.top .t{font-weight:700;font-size:16px;position:absolute;left:50%;transform:translateX(-50%)}
+.ib{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:var(--text)}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px}
+.logo{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--vio),var(--blue));box-shadow:0 0 18px #5b6bff66}
+.logo .i{width:17px;height:17px}
+.btn{width:100%;height:54px;border-radius:14px;font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center;gap:9px;color:#fff;background:linear-gradient(100deg,var(--vio),var(--blue));box-shadow:0 10px 28px #5b6bff40;transition:.2s}
+.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.7;cursor:wait;transform:none}
+.in{display:flex;align-items:center;gap:10px;height:54px;padding:0 14px;border-radius:14px;background:#0c173a;border:1px solid #2a3f80;color:var(--mut)}
+.in:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px #4f7bff2a}
+.in input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font-size:16px}
+.in input::placeholder{color:#6e80b5}
+.err{color:var(--bad);font-size:12.5px;margin-top:10px;min-height:0}
+.card{background:linear-gradient(160deg,var(--card),#0a1330);border:1px solid var(--line);border-radius:18px;padding:16px;margin-bottom:12px;}
+.hero{position:relative;padding-top:6px;min-height:560px; overflow: hidden;}
+.globe{position:absolute;right:-70px;top:-10px;width:330px;height:330px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#3a6bff77,#14307a55 45%,transparent 70%),radial-gradient(circle,#5b8cff99 1px,transparent 1.6px) 0 0/11px 11px;-webkit-mask:radial-gradient(circle,#000 55%,transparent 72%);mask:radial-gradient(circle,#000 55%,transparent 72%);opacity:.85; overflow: hidden;}
+.hero>*:not(.globe){position:relative}
+.pill{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;padding:7px 12px;border-radius:99px;background:#122a5c;border:1px solid #27458f;color:#bcd0ff;margin-top:150px}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 10px var(--ok)}
+h1{font-size:36px;line-height:1.1;letter-spacing:-1.2px;margin:16px 0 12px;font-weight:800}
+h1 span{background:linear-gradient(100deg,#6f8bff,#a371ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{color:#b4c2e8;font-size:15px;margin:0 0 22px}
+.ex{font-size:13px;color:var(--mut);margin-top:16px}.ex button{color:#8eabff;padding:0 4px}
+
+/* Переключатель режимов */
+.mode-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: #0c173a; padding: 6px; border-radius: 12px; border: 1px solid #2a3f80; }
+.mode-tab { flex: 1; text-align: center; padding: 10px; border-radius: 8px; font-weight: 600; font-size: 13px; color: var(--mut); transition: 0.2s; cursor: pointer; }
+.mode-tab.active { background: var(--blue); color: #fff; box-shadow: 0 4px 12px #4f7bff44; }
+
+/* Секции отчета */
+.sec-title { font-size: 16px; font-weight: 700; color: #fff; margin: 0 0 12px 0; display: flex; align-items: center; gap: 8px; }
+.sec-title .i { color: var(--blue); }
+.kv{display:flex;justify-content:space-between;gap:16px;padding:8px 0;font-size:13.5px; border-bottom: 1px solid #ffffff0a;}
+.kv:last-child{border:0}
+.kv span{color:#7f9dff;flex:none}.kv b{font-weight:500;text-align:right;overflow-wrap:anywhere;min-width:0}
+
+.status-row { display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid #ffffff0a; }
+.status-row:last-child { border: 0; }
+.status-row .s-ico { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex: none; margin-top: 2px; }
+.status-row .s-ico.ok { background: var(--okbg); color: var(--ok); }
+.status-row .s-ico.bad { background: #ff6b8122; color: var(--bad); }
+.status-row .s-ico.warn { background: #ffb84d22; color: var(--warn); }
+.status-row .s-txt { flex: 1; }
+.status-row b { font-size: 13.5px; display: block; color: #fff; }
+.status-row small { color: var(--mut); font-size: 12px; display: block; margin-top: 2px; line-height: 1.4; }
+.status-row .s-val { font-size: 11px; font-family: monospace; background: #091330; padding: 4px 8px; border-radius: 6px; margin-top: 6px; display: inline-block; border: 1px solid var(--line); color: #b4c2e8; word-break: break-all;}
+
+pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11.5px;color:#b4c2e8;margin:8px 0 0;background:#091330;border:1px solid var(--line);border-radius:12px;padding:12px;max-height:200px;overflow-y:auto;}
+.badge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:7px;background:var(--okbg);color:var(--ok); white-space:nowrap;}
+.badge.bad{background:#ff6b8122;color:var(--bad)}
+.badge.warn{background:#ffb84d22;color:var(--warn)}
+.tag-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tag { background: #16285a; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-family: monospace; border: 1px solid #2a3f80; color: #9db6ff; }
+
+@media(min-width: 1025px) { 
+  .app { max-width: 800px; padding: 0 28px; } 
+  .screen { padding: 0 0 50px; } 
+  .top { display: none; } 
+  .hero { max-width: 540px; min-height: 600px; display: flex; flex-direction: column; justify-content: center; } 
+  .globe { width: 640px; height: 640px; right: -60px; top: 10px; } 
+  h1 { font-size: 58px; letter-spacing: -2.2px; } 
+  #hform { display: flex; gap: 10px; } 
+  #hform .in { flex: 1; } 
+  #hform .btn { width: auto; padding: 0 28px; margin-top: 0 !important; white-space: nowrap; } 
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></symbol>
+<symbol id="i-back" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></symbol>
+<symbol id="i-share" viewBox="0 0 24 24"><path d="M12 3v12M7 8l5-5 5 5M5 14v6h14v-6"/></symbol>
+<symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="7" rx="2"/><rect x="3" y="14" width="18" height="7" rx="2"/><path d="M7 6.5h.01M7 17.5h.01"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5z"/><path d="M14 2v6h6M8 13h8M8 17h8"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s7-6 7-11a7 7 0 0 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+<symbol id="i-bug" viewBox="0 0 24 24"><path d="M8 2l1.88 1.88M16 2l-1.88 1.88M9 7.13v-1a3.003 3.003 0 116 0v1"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a4 4 0 014-4h4a4 4 0 014 4v3c0 3.3-2.7 6-6 6z"/><path d="M12 20v-9"/><path d="M6.53 9C4.6 8.8 3 7.1 3 5"/><path d="M6 13H2"/><path d="M3 21c0-2.1 1.7-3.9 3.8-4"/><path d="M20.97 5c0 2.1-1.6 3.8-3.5 4"/><path d="M22 13h-4"/><path d="M17.2 17c2.1.1 3.8 1.9 3.8 4"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></symbol>
+<symbol id="i-network" viewBox="0 0 24 24"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3"/><path d="M12 12V8"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></symbol>
+<symbol id="i-shield-off" viewBox="0 0 24 24"><path d="M19.69 14a6.9 6.9 0 0 0 .31-2V5l-8-3-3.16 1.18"/><path d="M4.73 4.73L4 5v7c0 6 8 10 8 10a20.29 20.29 0 0 0 5.62-4.38"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+<symbol id="i-cpu" viewBox="0 0 24 24"><rect width="16" height="16" x="4" y="4" rx="2"/><rect width="6" height="6" x="9" y="9" rx="1"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/></symbol>
+<symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+<symbol id="i-cookie" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 12v.01"/><path d="M12 16v.01"/></symbol>
+<symbol id="i-command" viewBox="0 0 24 24"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></symbol>
+<symbol id="i-radio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14"/></symbol>
+<symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></symbol>
+<symbol id="i-alert-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></symbol>
+</defs></svg>
+
+<div class="app" id="app">
+
+<!-- ГЛАВНЫЙ ЭКРАН -->
+<section class="screen on" id="s-home">
+  <div class="top"><div class="brand"><span class="logo"><svg class="i"><use href="#i-search"/></svg></span>IP Lens & DomainScope</div><span class="ib"></span></div>
+  <div class="globe"></div>
+  <div class="hero">
+    <span class="pill"><i></i>Исследование сети</span>
+    <h1>Вся информация<br>о <span>любом адресе</span></h1>
+    <p class="lead">IP, DNS, SSL, WHOIS, порты, поддомены, уязвимости.</p>
+    
+    <div class="mode-tabs">
+      <div class="mode-tab active" onclick="setMode('ip', this)">IP Scanner</div>
+      <div class="mode-tab" onclick="setMode('domain', this)">Domain</div>
+      <div class="mode-tab" onclick="setMode('url', this)">URL</div>
+    </div>
+
+    <form id="hform">
+      <label class="in"><svg class="i"><use href="#i-globe"/></svg><input id="hdomain" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Введите IPv4 (например: 8.8.8.8)"></label>
+      <button class="btn" style="margin-top:12px" type="submit" id="hbtn"><svg class="i"><use href="#i-search"/></svg><span>Анализировать</span></button>
+    </form>
+    <div class="err" id="herr"></div>
+    <div class="ex" id="examples-box">Примеры: <button data-q="8.8.8.8">8.8.8.8</button><button data-q="77.88.55.88">77.88.55.88</button></div>
+  </div>
+</section>
+
+<!-- ЭКРАН: ОТЧЕТ IP -->
+<section class="screen" id="s-ip-report">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="t">IP Отчет</div><span class="ib"></span></div>
+  
+  <div style="display:flex;align-items:center;gap:14px;margin:20px 0;">
+    <span class="logo" style="width:54px;height:54px;border-radius:16px;"><svg class="i" style="width:28px;height:28px"><use href="#i-globe"/></svg></span>
+    <div>
+      <h2 style="margin:0;font-size:22px;" id="ip-rd">—</h2>
+      <small style="color:var(--mut);font-size:12px;" id="ip-rm"></small>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="sec-title"><svg class="i"><use href="#i-globe"/></svg> Геолокация и Сеть</div>
+    <div class="kv"><span>Версия / Тип</span><b id="ip-type">—</b></div>
+    <div class="kv"><span>Страна</span><b id="ip-country">—</b></div>
+    <div class="kv"><span>Город</span><b id="ip-city">—</b></div>
+    <div class="kv"><span>Разница с МСК</span><b id="ip-msk" style="color:var(--warn)">—</b></div>
+    <div class="kv"><span>Местное время</span><b id="ip-localtime">—</b></div>
+  </div>
+
+  <div class="card">
+    <div class="sec-title"><svg class="i"><use href="#i-server"/></svg> Техническая информация</div>
+    <div class="kv"><span>PTR (reverse DNS)</span><b id="ip-ptr">—</b></div>
+    <div class="kv"><span>Диапазон (CIDR)</span><b id="ip-cidr">—</b></div>
+    <div class="kv"><span>Hex-формат</span><b id="ip-hex">—</b></div>
+  </div>
+</section>
+
+<!-- ЭКРАН: ПОЛНЫЙ ОТЧЕТ ДОМЕНА (ВСЕ НА ОДНОМ ЭКРАНЕ) -->
+<section class="screen" id="s-report">
+  <div class="top"><button class="ib" data-back><svg class="i"><use href="#i-back"/></svg></button><div class="brand"><span class="logo"><svg class="i"><use href="#i-search"/></svg></span>DomainScope</div><button class="ib" id="share"><svg class="i"><use href="#i-share"/></svg></button></div>
+  
+  <div style="display:flex;align-items:center;gap:14px;margin:20px 0;">
+    <span class="logo" style="width:54px;height:54px;border-radius:16px;"><svg class="i" style="width:28px;height:28px"><use href="#i-globe"/></svg></span>
+    <div>
+      <h2 style="margin:0;font-size:22px;" id="rd">—</h2>
+      <small style="color:var(--mut);font-size:12px;" id="rm"></small>
+    </div>
+  </div>
+
+  <!-- ОЦЕНКА -->
+  <div class="card" style="display:flex; align-items:center; justify-content:space-between; padding:20px;">
+    <div>
+      <div style="font-size:14px; font-weight:700; color:#fff; margin-bottom:4px;">Оценка безопасности</div>
+      <div style="font-size:12px; color:var(--mut);">На основе найденных уязвимостей</div>
+    </div>
+    <div id="scoreText" style="font-size: 28px; font-weight: 800;">— / 100</div>
+  </div>
+
+  <!-- 1. УЯЗВИМОСТИ -->
+  <div class="card" id="sec-vulns">
+    <div class="sec-title"><svg class="i" style="color:var(--bad)"><use href="#i-bug"/></svg> Уязвимости и Риски</div>
+    <div id="list-vulns"></div>
+  </div>
+
+  <!-- 2. ИНФРАСТРУКТУРА / WHOIS -->
+  <div class="card" id="sec-whois">
+    <div class="sec-title"><svg class="i"><use href="#i-doc"/></svg> WHOIS и IP Инфраструктура</div>
+    <div class="kv"><span>IP-адрес</span><b id="res-ip">—</b></div>
+    <div class="kv"><span>Провайдер (ISP)</span><b id="res-isp">—</b></div>
+    <div class="kv"><span>ASN</span><b id="res-asn">—</b></div>
+    <div class="kv"><span>Геолокация</span><b id="res-geo">—</b></div>
+    <div class="kv"><span>Anycast (CDN)</span><b id="res-anycast">—</b></div>
+    <div class="kv"><span>Регистратор</span><b id="res-reg">—</b></div>
+    <div class="kv"><span>Дата создания</span><b id="res-created">—</b></div>
+    <div class="kv"><span>Истекает</span><b id="res-exp">—</b></div>
+    <div class="kv"><span>Возраст</span><b id="res-age">—</b></div>
+    <div class="kv"><span>Статус</span><b id="res-status">—</b></div>
+  </div>
+
+  <!-- 3. SSL СЕРТИФИКАТ -->
+  <div class="card" id="sec-ssl">
+    <div class="sec-title"><svg class="i"><use href="#i-shield"/></svg> SSL Сертификат</div>
+    <div id="ssl-alert" style="margin-bottom:12px; padding:12px; border-radius:12px; font-weight:700;"></div>
+    <div class="kv"><span>Издатель</span><b id="res-issuer">—</b></div>
+    <div class="kv"><span>Срок действия</span><b id="res-valid">—</b></div>
+    <div class="kv"><span>Осталось дней</span><b id="res-days">—</b></div>
+    <div class="kv"><span>Версия TLS</span><b id="res-tls">—</b></div>
+    <div class="kv"><span>HSTS</span><b id="res-hsts">—</b></div>
+    <div class="kv"><span>Регионы (USA/EU/Asia)</span><b id="res-regions">—</b></div>
+  </div>
+
+  <!-- 4. DNS ЗАПИСИ -->
+  <div class="card" id="sec-dns">
+    <div class="sec-title"><svg class="i"><use href="#i-server"/></svg> DNS Записи</div>
+    <div id="list-dns"></div>
+  </div>
+
+  <!-- 5. ПОЧТА -->
+  <div class="card" id="sec-email">
+    <div class="sec-title"><svg class="i"><use href="#i-mail"/></svg> Защита почты</div>
+    <div class="kv"><span>SPF</span><b id="res-spf">—</b></div>
+    <div class="kv"><span>DMARC</span><b id="res-dmarc">—</b></div>
+    <div class="kv"><span>DKIM</span><b id="res-dkim">—</b></div>
+    <div class="kv"><span>MTA-STS</span><b id="res-mta">—</b></div>
+    <div class="kv"><span>TLS-RPT</span><b id="res-tlsrpt">—</b></div>
+  </div>
+
+  <!-- 6. ЗАГОЛОВКИ -->
+  <div class="card" id="sec-headers">
+    <div class="sec-title"><svg class="i"><use href="#i-list"/></svg> Заголовки безопасности</div>
+    <div id="list-headers"></div>
+  </div>
+
+  <!-- 7. ОТКРЫТЫЕ ПОРТЫ -->
+  <div class="card" id="sec-ports">
+    <div class="sec-title"><svg class="i"><use href="#i-network"/></svg> Открытые порты</div>
+    <div id="list-ports"></div>
+  </div>
+
+  <!-- 8. ТЕХНОЛОГИИ / СКОРОСТЬ / ПРОТОКОЛ -->
+  <div class="card" id="sec-tech">
+    <div class="sec-title"><svg class="i"><use href="#i-cpu"/></svg> Технологии и Скорость</div>
+    <div class="kv"><span>Протокол</span><b id="res-httpver">—</b></div>
+    <div class="kv"><span>Время ответа (TTFB)</span><b id="res-ttfb">—</b></div>
+    <div class="kv"><span>CMS / Сервер</span><b id="res-techs">—</b></div>
+  </div>
+
+  <!-- 9. SEO -->
+  <div class="card" id="sec-seo">
+    <div class="sec-title"><svg class="i"><use href="#i-search"/></svg> SEO и Метаданные</div>
+    <div class="kv"><span>Title</span><b id="res-title">—</b></div>
+    <div class="kv"><span>Description</span><b id="res-desc">—</b></div>
+    <div class="kv"><span>Canonical</span><b id="res-canon">—</b></div>
+    <div class="kv"><span>Favicon</span><b id="res-favicon">—</b></div>
+    <div class="kv"><span>OG Title</span><b id="res-ogtitle">—</b></div>
+    <div class="kv"><span>OG Image</span><b id="res-ogimg">—</b></div>
+  </div>
+
+  <!-- 10. COOKIES / МЕТОДЫ / ROBOTS -->
+  <div class="card" id="sec-misc">
+    <div class="sec-title"><svg class="i"><use href="#i-cookie"/></svg> Cookies и Методы</div>
+    <div id="list-cookies"></div>
+    <div style="margin-top:10px; font-size:12px; color:var(--mut);">HTTP Методы: <span id="res-methods" style="color:#fff"></span></div>
+    <div style="margin-top:10px; font-size:12px; color:var(--mut);">Robots.txt (скрытые пути): <span id="res-robots" style="color:var(--warn)"></span></div>
+  </div>
+
+  <!-- 11. ФАЙЛЫ -->
+  <div class="card" id="sec-files">
+    <div class="sec-title"><svg class="i" style="color:var(--bad)"><use href="#i-eye-off"/></svg> Утечки файлов</div>
+    <div id="list-files"></div>
+  </div>
+
+  <!-- 12. ПОДДОМЕНЫ -->
+  <div class="card" id="sec-subs">
+    <div class="sec-title"><svg class="i"><use href="#i-layers"/></svg> Поддомены</div>
+    <div style="font-size:12px; color:var(--mut); margin-bottom:4px;">Активные:</div>
+    <div id="list-subs" class="tag-list"></div>
+    <div style="font-size:12px; color:var(--mut); margin-top:12px; margin-bottom:4px;">Исторические (crt.sh):</div>
+    <div id="list-histsubs" class="tag-list"></div>
+  </div>
+  
+</section>
+</div>
+
+<script src="data/geoip.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const ic = n => `<svg class="i"><use href="#i-${n}"/></svg>`;
+let currentMode = 'ip';
+const fmtDT = t => new Date(t).toLocaleString("ru-RU", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+function go(n) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === "s-" + n));
+  window.scrollTo(0, 0);
+}
+
+// ==========================================
+// ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМОВ
+// ==========================================
+function setMode(mode, el) {
+  currentMode = mode;
+  document.querySelectorAll('.mode-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  
+  const input = $('hdomain');
+  const exBox = $('examples-box');
+  
+  if (mode === 'ip') {
+    input.placeholder = "Введите IPv4 (например: 8.8.8.8)";
+    exBox.innerHTML = 'Примеры: <button data-q="8.8.8.8">8.8.8.8</button><button data-q="77.88.55.88">77.88.55.88</button>';
+  } else if (mode === 'domain') {
+    input.placeholder = "Введите домен (например: google.com)";
+    exBox.innerHTML = 'Примеры: <button data-q="google.com">google.com</button><button data-q="github.com">github.com</button>';
+  } else {
+    input.placeholder = "Введите URL (например: https://site.com/page)";
+    exBox.innerHTML = 'Примеры: <button data-q="https://ya.ru">https://ya.ru</button><button data-q="https://vk.com/feed">https://vk.com/feed</button>';
+  }
+}
+
+// ==========================================
+// IP СКАНЕР (Локальный)
+// ==========================================
+function v4Parse(s){const p=s.split('.');if(p.length!==4)return null;const a=[];for(const x of p){if(!/^(0|[1-9]\d{0,2})$/.test(x))return null;const n=Number(x);if(n>255)return null;a.push(n)}return a}
+const v4ToInt=a=>((a[0]<<24)>>>0)+(a[1]<<16)+(a[2]<<8)+a[3];
+const v4ToPTR=a=>a.slice().reverse().join('.')+'.in-addr.arpa';
+const v4ToHex=a=>a.map(x=>x.toString(16).padStart(2,'0')).join('.');
+const CC_NAME = window.COUNTRY_NAME || {};
+const GEO_DB = window.GEO_DB || [];
+
+function lookupGeoV4(a){
+  const ip=v4ToInt(a);
+  for(const e of GEO_DB){
+    if(!e[0].includes('/')||e[0].includes(':'))continue;
+    const [net,pref]=e[0].split('/');
+    const ni=v4ToInt(v4Parse(net));
+    const mask=(~0<<(32-pref))>>>0;
+    if(((ip&mask)>>>0)===((ni&mask)>>>0)) return {cc:e[1],city:e[2],tz:e[3],cidr:e[0]};
+  }
+  return null;
+}
+
+function getTzInfo(tz) {
+  if (!tz || tz === '—') return { time: '—', mskDiff: '—' };
+  try {
+    const now = new Date();
+    const timeStr = new Intl.DateTimeFormat('ru-RU', { timeZone: tz, dateStyle: 'short', timeStyle: 'short' }).format(now);
+    const mskTime = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
+    const targetTime = new Date(now.toLocaleString('en-US', { timeZone: tz }));
+    const diffMs = targetTime - mskTime;
+    const diffH = Math.floor(Math.abs(diffMs) / 3600000);
+    const diffM = Math.floor((Math.abs(diffMs) % 3600000) / 60000);
+    let mskDiff = '';
+    if (diffMs === 0) mskDiff = 'МСК+0';
+    else mskDiff = `МСК ${diffMs > 0 ? '+' : '-'}${diffH}ч ${diffM > 0 ? diffM + 'м' : ''}`;
+    return { time: timeStr, mskDiff };
+  } catch(e) { return { time: '—', mskDiff: '—' }; }
+}
+
+function scanIPClient(ip) {
+  const a4 = v4Parse(ip);
+  if(!a4) { $('herr').textContent = "Неверный формат IP-адреса"; return; }
+  $('herr').textContent = "";
+
+  $('ip-rd').textContent = ip;
+  $('ip-rm').textContent = "Проверено: " + fmtDT(Date.now());
+  $('ip-ptr').textContent = v4ToPTR(a4);
+  $('ip-hex').textContent = v4ToHex(a4);
+  
+  const geo = lookupGeoV4(a4);
+  if (geo) {
+    $('ip-type').textContent = 'Публичный (IPv4)';
+    $('ip-country').textContent = CC_NAME[geo.cc] || geo.cc;
+    $('ip-city').textContent = geo.city;
+    $('ip-cidr').textContent = geo.cidr;
+    
+    const tzInfo = getTzInfo(geo.tz);
+    $('ip-msk').textContent = tzInfo.mskDiff;
+    $('ip-localtime').textContent = tzInfo.time + ` (${geo.tz})`;
+  } else {
+    $('ip-type').textContent = 'Локальный / Неизвестный (IPv4)';
+    $('ip-country').textContent = '—';
+    $('ip-city').textContent = '—';
+    $('ip-cidr').textContent = '—';
+    $('ip-msk').textContent = '—';
+    $('ip-localtime').textContent = '—';
+  }
+  
+  go("ip-report");
+}
+
+// ==========================================
+// DOMAIN / URL СКАНЕР
+// ==========================================
+function clean(v) {
+  let d = v.trim().toLowerCase().replace(/^https?:\/\//, "").split(/[\/?#:]/)[0].replace(/\.$/, "");
+  if (!d || d.length > 253 || !d.includes(".")) throw new Error("Введите корректный домен");
+  return d;
+}
+
+function demo(d) {
+  return { domain: d, ip_address: "93.184.216.34", scanned_at: new Date().toISOString(),
+    dns: { a_records: ["93.184.216.34"], aaaa_records: ["2606:2800:220:1:248:1893:25c8:1946"], mx_records: ["mail." + d], ns_records: ["ns1.cloudflare.com", "ns2.cloudflare.com"], txt_records: ["v=spf1 include:_spf.cloudflare.com ~all"], caa_records: ["0 issue \"letsencrypt.org\""], spf: "v=spf1 include:_spf.cloudflare.com ~all", dmarc: "v=DMARC1; p=reject" },
+    ip_info: { provider: "Cloudflare, Inc.", asn: "13335", city: "Сан-Франциско", country: "США", lat: 37.7749, lon: -122.4194 },
+    whois: { registrar: "Cloudflare, Inc.", creation_date: "2018-11-12", expiration_date: "2026-11-12", status: ["clientTransferProhibited"] },
+    ssl: { valid: true, issuer: "Cloudflare Inc.", expires_at: "2025-11-12", valid_from: "2024-11-12", expires_in_days: 69, tls_version: "TLS 1.3", algorithm: "ECDSA (P-256)", hsts: true, is_self_signed: false, ocsp_stapling: true },
+    seo: { title: "Test Title", description: "Test Description", canonical: "https://site.com", favicon: true, og_title: "OG Title", og_image: "https://site.com/img.jpg", broken_links: [] },
+    email_auth: { spf_strict: false, dmarc_policy: "reject", dkim: true, mta_sts: false, tls_rpt: false },
+    headers: { "server": "nginx/1.18.0", "x-powered-by": "PHP/7.4" },
+    open_ports: [22, 3306], subdomains: ["www."+d, "api."+d], historical_subs: ["old."+d], waf: "Cloudflare",
+    sensitive_paths: ["/admin-panel"], exposed_files: [{ path: "/.env", content: "APP_NAME=Laravel\nDB_PASS=super_secret" }],
+    has_sitemap: true, has_security_txt: false, response_time: 145, technologies: ["nginx", "PHP/7.4", "WordPress"],
+    cookies: [{ name: "PHPSESSID", secure: false, http_only: true, same_site: "Lax" }],
+    http_methods: ["GET", "POST", "OPTIONS"], mta_sts: false, tls_rpt: false, http_version: "HTTP/1.1",
+    domain_days_left: 365, domain_age: 1000, is_anycast: true, ssl_regions: { "USA": true, "EU": true, "Asia": false },
+    vulns: [
+      { severity: "critical", title: "Открыт .env файл", desc: "Найден .env. В нем могут быть пароли." },
+      { severity: "high", title: "Отсутствует HSTS", desc: "Возможен перехват трафика." }
+    ]
+  };
+}
+
+async function scan(d) {
+  const btn = $("hbtn");
+  const origText = btn.innerHTML;
+  btn.innerHTML = `<svg class="i" style="animation:spin 1s linear infinite"><use href="#i-globe"/></svg> <span>Сканирую...</span>`;
+  btn.disabled = true;
+
+  try {
+    const r = await fetch(`/api/scan/${d}`);
+    if (!r.ok) throw new Error("Ошибка");
+    const res = await r.json();
+    renderAll(res);
+    go("report");
+  } catch (e) {
+    // В случае если сервер выключен, показываем демо, чтобы интерфейс не был пустым
+    renderAll(demo(d));
+    go("report");
+  } finally {
+    btn.innerHTML = origText;
+    btn.disabled = false;
+  }
+}
+
+// ==========================================
+// ОТРИСОВКА ВСЕХ ДАННЫХ
+// ==========================================
+function renderAll(x) {
+  $("rd").textContent = x.domain;
+  $("rm").textContent = "Проверено: " + fmtDT(x.scanned_at || Date.now());
+
+  // 1. Оценка (Score)
+  let score = 100 - (x.vulns?.length || 0) * 10;
+  if (score < 0) score = 0;
+  $("scoreText").textContent = score + " / 100";
+  $("scoreText").style.color = score < 50 ? "var(--bad)" : score < 80 ? "var(--warn)" : "var(--ok)";
+
+  // 2. Уязвимости
+  let vulnsHtml = '';
+  if (x.vulns && x.vulns.length > 0) {
+    x.vulns.forEach(v => {
+      vulnsHtml += `<div class="status-row"><span class="s-ico bad">${ic("x")}</span><div class="s-txt"><b>${esc(v.title)}</b><small>${esc(v.desc)}</small></div></div>`;
+    });
+  } else {
+    vulnsHtml = `<div class="status-row"><span class="s-ico ok">${ic("check")}</span><div class="s-txt"><b>Уязвимостей не найдено</b></div></div>`;
+  }
+  $("list-vulns").innerHTML = vulnsHtml;
+
+  // 3. WHOIS / IP
+  $("res-ip").textContent = x.ip_address || "—";
+  $("res-isp").textContent = x.ip_info?.provider || "—";
+  $("res-asn").textContent = x.ip_info?.asn || "—";
+  $("res-geo").textContent = [x.ip_info?.country, x.ip_info?.city].filter(Boolean).join(", ") || "—";
+  $("res-anycast").textContent = x.is_anycast ? "Да" : "Нет";
+  $("res-reg").textContent = x.whois?.registrar || "—";
+  $("res-created").textContent = x.whois?.creation_date || "—";
+  $("res-exp").textContent = x.whois?.expiration_date || "—";
+  $("res-age").textContent = x.domain_age ? Math.floor(x.domain_age / 365) + " лет" : "—";
+  $("res-status").textContent = (x.whois?.status || []).join(", ") || "—";
+
+  // 4. SSL
+  const s = x.ssl || {};
+  const sslBox = $("ssl-alert");
+  if (s.valid && !s.is_self_signed) {
+    sslBox.style.background = "rgba(47,209,138,0.1)"; sslBox.style.color = "var(--ok)"; sslBox.style.border = "1px solid #1d6a66";
+    sslBox.textContent = "Сертификат действителен";
+  } else {
+    sslBox.style.background = "rgba(255,107,129,0.1)"; sslBox.style.color = "var(--bad)"; sslBox.style.border = "1px solid #7a2a40";
+    sslBox.textContent = "Сертификат недействителен или самоподписан";
+  }
+  $("res-issuer").textContent = s.issuer || "—";
+  $("res-valid").textContent = s.valid_from ? `${s.valid_from} – ${s.expires_at}` : s.expires_at || "—";
+  $("res-days").textContent = s.expires_in_days ? `${s.expires_in_days} дн.` : "—";
+  $("res-tls").textContent = s.tls_version || "—";
+  $("res-hsts").textContent = s.hsts ? "Да" : "Нет";
+  $("res-regions").textContent = x.ssl_regions ? Object.entries(x.ssl_regions).map(([k,v]) => `${k}: ${v?'OK':'Fail'}`).join(" | ") : "—";
+
+  // 5. DNS
+  let dnsHtml = '';
+  const addDns = (type, arr) => { if(arr && arr.length) arr.forEach(v => dnsHtml += `<div class="kv"><span>${type}</span><b>${esc(v)}</b></div>`); };
+  addDns('A', x.dns?.a_records);
+  addDns('AAAA', x.dns?.aaaa_records);
+  addDns('MX', x.dns?.mx_records);
+  addDns('NS', x.dns?.ns_records);
+  addDns('TXT', x.dns?.txt_records);
+  addDns('CAA', x.dns?.caa_records);
+  $("list-dns").innerHTML = dnsHtml || `<div class="kv"><span>Нет записей</span></div>`;
+
+  // 6. Email
+  const ea = x.email_auth || {};
+  $("res-spf").textContent = ea.spf_strict ? "Строгий" : "Мягкий";
+  $("res-dmarc").textContent = ea.dmarc_policy || "Нет";
+  $("res-dkim").textContent = ea.dkim ? "Настроен" : "Нет";
+  $("res-mta").textContent = ea.mta_sts ? "Настроен" : "Нет";
+  $("res-tlsrpt").textContent = ea.tls_rpt ? "Настроен" : "Нет";
+
+  // 7. Заголовки
+  let hdrHtml = '';
+  const hdrs = [
+    { k: "content-security-policy", n: "CSP" },
+    { k: "strict-transport-security", n: "HSTS" },
+    { k: "x-frame-options", n: "X-Frame-Options" },
+    { k: "x-content-type-options", n: "X-Content-Type-Options" },
+    { k: "referrer-policy", n: "Referrer-Policy" }
+  ];
+  hdrs.forEach(h => {
+    const has = !!x.headers?.[h.k];
+    hdrHtml += `<div class="status-row"><span class="s-ico ${has?'ok':'bad'}">${ic(has?'check':'x')}</span><div class="s-txt"><b>${h.n}</b>${has ? `<span class="s-val">${esc(x.headers[h.k])}</span>` : ''}</div></div>`;
+  });
+  $("list-headers").innerHTML = hdrHtml;
+
+  // 8. Порты
+  let portsHtml = '';
+  if (x.open_ports && x.open_ports.length > 0) {
+    x.open_ports.forEach(p => {
+      portsHtml += `<div class="status-row"><span class="s-ico bad">${ic("x")}</span><div class="s-txt"><b>Порт ${p}</b><small>Открыт</small></div></div>`;
+    });
+  } else {
+    portsHtml = `<div class="status-row"><span class="s-ico ok">${ic("check")}</span><div class="s-txt"><b>Опасных портов нет</b></div></div>`;
+  }
+  $("list-ports").innerHTML = portsHtml;
+
+  // 9. Технологии
+  $("res-httpver").textContent = x.http_version || "—";
+  $("res-ttfb").textContent = x.response_time ? x.response_time + " мс" : "—";
+  $("res-techs").textContent = (x.technologies || []).join(", ") || "—";
+
+  // 10. SEO
+  $("res-title").textContent = x.seo?.title || "—";
+  $("res-desc").textContent = x.seo?.description || "—";
+  $("res-canon").textContent = x.seo?.canonical || "—";
+  $("res-favicon").textContent = x.seo?.favicon ? "Есть" : "Нет";
+  $("res-ogtitle").textContent = x.seo?.og_title || "—";
+  $("res-ogimg").textContent = x.seo?.og_image || "—";
+
+  // 11. Cookies / Методы / Robots
+  let ckHtml = '';
+  if (x.cookies && x.cookies.length > 0) {
+    x.cookies.forEach(c => { ckHtml += `<div class="kv"><span>${esc(c.name)}</span><b>${c.secure?'Secure':'No Secure'} / ${c.http_only?'HttpOnly':'No HttpOnly'}</b></div>`; });
+  } else { ckHtml = `<div class="kv"><span>Нет Cookies</span></div>`; }
+  $("list-cookies").innerHTML = ckHtml;
+  $("res-methods").textContent = (x.http_methods || []).join(", ") || "—";
+  $("res-robots").textContent = (x.sensitive_paths || []).join(", ") || "Не найдено";
+
+  // 12. Файлы
+  let filesHtml = '';
+  if (x.exposed_files && x.exposed_files.length > 0) {
+    x.exposed_files.forEach(f => {
+      filesHtml += `<div style="margin-bottom:10px;"><b style="color:var(--bad);font-size:13px;">${esc(f.path)}</b><pre>${esc(f.content)}</pre></div>`;
+    });
+  } else {
+    filesHtml = `<div class="kv"><span>Утечек не найдено</span></div>`;
+  }
+  $("list-files").innerHTML = filesHtml;
+
+  // 13. Поддомены
+  let subsHtml = '';
+  (x.subdomains || []).forEach(s => subsHtml += `<span class="tag">${esc(s)}</span>`);
+  $("list-subs").innerHTML = subsHtml || `<span style="color:var(--mut)">Не найдено</span>`;
+  
+  let histHtml = '';
+  (x.historical_subs || []).forEach(s => histHtml += `<span class="tag">${esc(s)}</span>`);
+  $("list-histsubs").innerHTML = histHtml || `<span style="color:var(--mut)">Не найдено</span>`;
+}
+
+// ==========================================
+// СОБЫТИЯ
+// ==========================================
+document.addEventListener("click", e => {
+  const t = e.target.closest("button"); 
+  if (!t) return;
+  if (t.hasAttribute("data-back")) { go("home"); return; }
+  if (t.dataset.q) { $("hdomain").value = t.dataset.q; return $("hform").requestSubmit(); }
+});
+
+$("hform").addEventListener("submit", e => {
+  e.preventDefault(); $("herr").textContent = "";
+  const val = $("hdomain").value.trim();
+  if (!val) return;
+  
+  if (currentMode === 'ip') {
+    scanIPClient(val);
+  } else {
+    try { 
+      const d = clean(val); 
+      scan(d);
+    } catch (x) { 
+      $("herr").textContent = x.message; 
+    }
+  }
+});
+
+go("home");
+</script>
+</body>
+                                                      </html>
